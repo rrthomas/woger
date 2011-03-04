@@ -3,16 +3,16 @@ Woger
 
 _Welease pwomptly, welease wegularly!_
 
-Woger automatically makes releases and release announcements to SourceForge, freshmeat, GNU and the Lua mailing list, and is easily extensible to other systems. It requires the user to supply only the SourceForge login credentials, a release notes file (which is prompted for if empty or non-existent) and a FreshMeat release focus. It is easy to use it directly from a build system. It uses [http://copher.sourceforge.net/|copher] to talk to SourceForge, [http://www.ivarch.com/programs/fm-submit.shtml|fm-submit] to talk to FreshMeat, and @mail@ to send email.
+Woger automatically makes releases and release announcements to SourceForge, freshmeat and the Lua mailing list, and is easily extensible to other systems. It requires the user to supply only the SourceForge login credentials, a release notes file (which is prompted for if empty or non-existent) and a FreshMeat release focus. It is easy to use it directly from a build system. It uses [http://copher.sourceforge.net/|copher] to talk to SourceForge, [http://www.ivarch.com/programs/fm-submit.shtml|fm-submit] to talk to FreshMeat, and @mail@ to send email.
 
 Woger is weleased under the GNU General Public License version 3, or (at your option) any later version.
 
 Download
 ========
 
-Woger welease 10
+Woger welease 14
 
-   * Source code (ready to run): $webfile{woger-10.tar.gz,tar.gz}
+   * Source code (ready to run): $webfile{woger-14.tar.gz,tar.gz}
 
 Usage
 =====
