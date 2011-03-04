@@ -10,25 +10,6 @@
 #   For SourceForge: copher: http://copher.sourceforge.net/
 #   For Freshmeat: Snake Steak: http://repo.cat-v.org/snake_steak/
 
-# Welease histowy
-#
-# Welease 13: 03/01/2011 Add URL parameter to lua-l method.
-# Welease 12: 20/10/2010 Update address of lua-l.
-# Welease 11: 23/08/2009 Support Freshmeat again using Snake Steak.
-#                        Use env to find perl executable in hash-bang line.
-# Welease 10: 08/04/2009 Filter out unknown methods, and warn about them.
-#                        Add newline to calls of die and warn for neater errors.
-# Welease  9: 08/04/2009 Comment out Freshmeat method until new API is released.
-#                        Generate list of release methods.
-# Welease  8: 23/02/2009 Wrap body of emails
-# Welease  7: 12/12/2008 Fix printing of Freshmeat release focus list.
-# Welease  6: 04/08/2008 Fix submission of release notes to Freshmeat.
-# Welease  5: 27/07/2008 Add support for lua-l mailing list announcements, assuming a LuaForge project.
-# Welease  4: 13/05/2008 Add support for GNU releases and release methods argument.
-# Welease  3: 04/02/2008 Read command-line arguments properly. Oops.
-# Welease  2: 29/12/2007 Add usage message, remove temporary out.html
-# Welease  1: 27/12/2007 Initial release, extracted from Zile's Makefile.am
-
 # FIXME: Add methods rsync (for web site), log (to announce on my log)
 
 use warnings;
