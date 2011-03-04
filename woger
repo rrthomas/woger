@@ -5,7 +5,6 @@
 # version.
 
 # Dependencies:
-#   For ftp: wput
 #   For email: mail
 #   For SourceForge: copher: http://copher.sourceforge.net/
 #   For Freshmeat: Snake Steak: http://repo.cat-v.org/snake_steak/
@@ -62,40 +61,6 @@ my $url;
     open(FILE, "|-", "ss.py", "release", "$package", "$version");
     print FILE slurp($notes);
     close FILE or die "Snake Steak failed\n";
-  }
- );
-
-%{$releaser{gnu}} = (
-  release => sub {
-    my $release_notes = slurp($notes);
-    system("gpg", "-b", "$package-$version.tar.gz") == 0 or die "gpg failed\n";
-    open(FILE, ">$package-$version.tar.gz.directive");
-    print FILE <<END;
-version: 1.1
-directory: $package
-filename: $package-$version.tar.gz
-END
-    close FILE;
-    system("gpg", "--clearsign", "$package-$version.tar.gz.directive") == 0
-      or die "gpg failed\n";
-    system("wput", "$package-$version.tar.gz", "$package-$version.tar.gz.sig",
-      "$package-$version.tar.gz.directive.asc", "ftp://ftp-upload.gnu.org/incoming/ftp/") == 0
-        or die "wput failed\n";
-    my $message = <<END;
-I am happy to announce the release of $package_name $version,
-$description.
-
-$release_notes
-
-$package_name\'s web page is at http://www.gnu.org/software/$package/
-
-The signed source can be obtained from ftp.gnu.org and its world-wide
-mirrors:
-
-  http://ftp.gnu.org/gnu/$package/$package-$version.tar.gz
-  http://ftp.gnu.org/gnu/$package/$package-$version.tar.gz.sig
-END
-    mail("info-gnu\@gnu.org", "$package_name $version released", $message);
   }
  );
 
