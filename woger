@@ -1,0 +1,195 @@
+#!/usr/bin/env perl
+# Woger - make a release
+# (c) Reuben Thomas 2007, 2008, 2009, 2010, 2011
+# Released under the GPL version 3, or (at your option) any later
+# version.
+
+# Dependencies:
+#   For ftp: wput
+#   For email: mail
+#   For SourceForge: copher: http://copher.sourceforge.net/
+#   For Freshmeat: Snake Steak: http://repo.cat-v.org/snake_steak/
+
+# Welease histowy
+#
+# Welease 13: 03/01/2011 Add URL parameter to lua-l method.
+# Welease 12: 20/10/2010 Update address of lua-l.
+# Welease 11: 23/08/2009 Support Freshmeat again using Snake Steak.
+#                        Use env to find perl executable in hash-bang line.
+# Welease 10: 08/04/2009 Filter out unknown methods, and warn about them.
+#                        Add newline to calls of die and warn for neater errors.
+# Welease  9: 08/04/2009 Comment out Freshmeat method until new API is released.
+#                        Generate list of release methods.
+# Welease  8: 23/02/2009 Wrap body of emails
+# Welease  7: 12/12/2008 Fix printing of Freshmeat release focus list.
+# Welease  6: 04/08/2008 Fix submission of release notes to Freshmeat.
+# Welease  5: 27/07/2008 Add support for lua-l mailing list announcements, assuming a LuaForge project.
+# Welease  4: 13/05/2008 Add support for GNU releases and release methods argument.
+# Welease  3: 04/02/2008 Read command-line arguments properly. Oops.
+# Welease  2: 29/12/2007 Add usage message, remove temporary out.html
+# Welease  1: 27/12/2007 Initial release, extracted from Zile's Makefile.am
+
+# FIXME: Add methods rsync (for web site), log (to announce on my log)
+
+use warnings;
+use strict;
+
+use File::Basename;
+use Term::ReadLine;
+use Perl6::Slurp;
+use Text::Wrap;
+
+my $prog = basename($0);
+
+my $term = Term::ReadLine->new($prog);
+
+
+# Release methods
+
+my %releaser = ();
+my @methods;
+my $package;
+my $package_name;
+my $version;
+my $description;
+my $notes;
+my $url;
+
+%{$releaser{null}} = (
+  release => sub {
+  }
+ );
+
+%{$releaser{sourceforge}} = (
+  getinfo => sub {
+    my $self = shift;
+    $$self{user} = $term->readline("SourceForge login: ");
+    $$self{password} = $term->readline("Password: "); # FIXME: Hide password
+  },
+  release => sub {
+    my $self = shift;
+    system("copher", "-u", $$self{user}, "-P", $$self{password}, "-p",
+      $package, "-k", $package, "-r", $version, "-N", $notes, "$package-$version.tar.gz") == 0
+        or die "copher failed\n";
+    unlink "out.html";
+  }
+ );
+
+%{$releaser{freshmeat}} = (
+  release => sub {
+    my $self = shift;
+    open(FILE, "|-", "ss.py", "release", "$package", "$version");
+    print FILE slurp($notes);
+    close FILE or die "Snake Steak failed\n";
+  }
+ );
+
+%{$releaser{gnu}} = (
+  release => sub {
+    my $release_notes = slurp($notes);
+    system("gpg", "-b", "$package-$version.tar.gz") == 0 or die "gpg failed\n";
+    open(FILE, ">$package-$version.tar.gz.directive");
+    print FILE <<END;
+version: 1.1
+directory: $package
+filename: $package-$version.tar.gz
+END
+    close FILE;
+    system("gpg", "--clearsign", "$package-$version.tar.gz.directive") == 0
+      or die "gpg failed\n";
+    system("wput", "$package-$version.tar.gz", "$package-$version.tar.gz.sig",
+      "$package-$version.tar.gz.directive.asc", "ftp://ftp-upload.gnu.org/incoming/ftp/") == 0
+        or die "wput failed\n";
+    my $message = <<END;
+I am happy to announce the release of $package_name $version,
+$description.
+
+$release_notes
+
+$package_name\'s web page is at http://www.gnu.org/software/$package/
+
+The signed source can be obtained from ftp.gnu.org and its world-wide
+mirrors:
+
+  http://ftp.gnu.org/gnu/$package/$package-$version.tar.gz
+  http://ftp.gnu.org/gnu/$package/$package-$version.tar.gz.sig
+END
+    mail("info-gnu\@gnu.org", "$package_name $version released", $message);
+  }
+ );
+
+%{$releaser{"lua-l"}} = (
+  release => sub {
+    my $release_notes = slurp($notes);
+    $url ||= "http://luaforge.net/projects/$package";
+    my $message = <<END;
+I am happy to announce the release of $package_name $version,
+$description.
+
+$release_notes
+
+Get it from $url
+END
+    mail("lua-l\@lists.lua.org", "[ANN] $package_name $version released", $message);
+  }
+ );
+
+
+sub mail {
+  my ($address, $subject, $body) = @_;
+  open(FILE, "|-", "mail", "-s", $subject, $address);
+  print FILE wrap('', '', ($body));
+  close FILE or die "mail failed\n";
+}
+
+if ($#ARGV < 5 || $#ARGV > 6) {
+ my $methods = join ", ", keys %releaser;
+ die <<END if $#ARGV != 5;
+Usage: $prog METHODS PACKAGE NAME VERSION DESCRIPTION NOTES [URL]
+Make a release
+
+  METHODS is a comma-separated list of methods, from:
+    $methods
+  PACKAGE is the package base name
+  NAME is the package text name
+  VERSION is the version number
+  DESCRIPTION is the short project description
+  NOTES is the release notes file (need not exist)
+  URL is the home page URL
+END
+}
+
+# Get arguments
+@methods = split /,/, shift;
+$package = shift;
+$package_name = shift;
+$version = shift;
+$description = shift;
+$notes = shift;
+$url = shift;
+
+# Write release notes if non-existent
+if (!-e $notes) {
+  die "VISUAL is not set; please set it!\n"
+    if -z $ENV{VISUAL};
+  system($ENV{VISUAL}, $notes) == 0 or die "editor failed\n";
+}
+
+# Filter out unknown methods
+@methods = grep {
+  if (!defined ($releaser{$_})) {
+    warn "no method $_; ignoring\n";
+    0;
+  } else {
+    1;
+  }
+} @methods;
+
+# Welease!
+for my $method (@methods) {
+  $releaser{$method}{getinfo}($releaser{$method})
+    if $releaser{$method}{getinfo};
+}
+for my $method (@methods) {
+  $releaser{$method}{release}($releaser{$method});
+}
