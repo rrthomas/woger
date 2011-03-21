@@ -1,6 +1,6 @@
 #!/usr/bin/env perl
 # Woger - make a release
-# Welease 14
+# Welease 15
 # (c) Reuben Thomas 2007, 2008, 2009, 2010, 2011
 # Released under the GPL version 3, or (at your option) any later
 # version.
@@ -36,6 +36,23 @@ my $description;
 my $notes;
 my $url;
 
+my $have_term_readkey = eval {require Term::ReadKey} // 0;
+
+sub read_password {
+  my $prompt = shift // 'Password';
+  if ($have_term_readkey) {
+    Term::ReadKey::ReadMode('noecho');
+  } else {
+    $prompt = $prompt . ' (will be shown)';
+  }
+  my $retval = $term->readline($prompt . ': ');
+  if ($have_term_readkey) {
+    print "\n"; # if noecho was on, CR wasn't printed
+    Term::ReadKey::ReadMode('restore');
+  }
+  return $retval;
+}
+
 %{$releaser{null}} = (
   release => sub {
   }
@@ -45,7 +62,7 @@ my $url;
   getinfo => sub {
     my $self = shift;
     $$self{user} = $term->readline("SourceForge login: ");
-    $$self{password} = $term->readline("Password: "); # FIXME: Hide password
+    $$self{password} = $term->read_password();
   },
   release => sub {
     my $self = shift;
