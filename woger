@@ -1,7 +1,7 @@
 #!/usr/bin/env perl
 # Woger - make a release
-# Welease 15
-# (c) Reuben Thomas 2007, 2008, 2009, 2010, 2011
+# Welease 16
+# (c) Reuben Thomas 2007, 2008, 2009, 2010
 # Released under the GPL version 3, or (at your option) any later
 # version.
 
@@ -79,6 +79,15 @@ sub read_password {
     open(FILE, "|-", "ss.py", "release", "$package", "$version");
     print FILE slurp($notes);
     close FILE or die "Snake Steak failed\n";
+  }
+ );
+
+%{$releaser{gnu}} = (
+  release => sub {
+    system("./build-aux/gnupload", "--to", "ftp.gnu.org:$package", "$package-$version.tar.gz") == 0
+      or die "gnupload failed\n";
+    my $message = slurp($notes);
+    mail("info-gnu\@gnu.org", "$package_name $version released", $message);
   }
  );
 
