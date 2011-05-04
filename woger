@@ -1,26 +1,41 @@
 #!/usr/bin/env perl
 # Woger - make a release
-# Welease 16
-# (c) Reuben Thomas 2007, 2008, 2009, 2010
-# Released under the GPL version 3, or (at your option) any later
-# version.
+my $version_banner = <<END;
+Woger welease 17
+Copyright (c) Reuben Thomas 2007-2011
+Released under the GPL version 3, or (at your option) any later version.
+END
+
+use 5.10.0;
+
+use warnings;
+use strict;
+
+# FIXME: Add methods rsync (e.g. for web sites), log (to announce on my log)
 
 # Dependencies:
 #   For email: mail
 #   For SourceForge: copher: http://copher.sourceforge.net/
 #   For Freshmeat: Snake Steak: http://repo.cat-v.org/snake_steak/
-
-# FIXME: Add methods rsync (for web site), log (to announce on my log)
-
-use warnings;
-use strict;
-
-use File::Basename;
 use Term::ReadLine;
 use Perl6::Slurp;
 use Text::Wrap;
+use Set::Scalar;
+
+use File::Basename;
+use Getopt::Long;
 
 my $prog = basename($0);
+
+my %var_help = (
+  package => "package base name",
+  package_name => "package text name",
+  version => "version number",
+  description => "short project description",
+  notes => "release notes file (need not exist)",
+  home => "home page URL",
+  upload => "upload URL",
+);
 
 my $term = Term::ReadLine->new($prog);
 
@@ -28,13 +43,7 @@ my $term = Term::ReadLine->new($prog);
 # Release methods
 
 my %releaser = ();
-my @methods;
-my $package;
-my $package_name;
-my $version;
-my $description;
-my $notes;
-my $url;
+my %vars;
 
 my $have_term_readkey = eval {require Term::ReadKey} // 0;
 
@@ -54,11 +63,13 @@ sub read_password {
 }
 
 %{$releaser{null}} = (
+  vars => Set::Scalar->new,
   release => sub {
   }
  );
 
 %{$releaser{sourceforge}} = (
+  vars => Set::Scalar->new("notes", "package", "version"),
   getinfo => sub {
     my $self = shift;
     $$self{user} = $term->readline("SourceForge login: ");
@@ -67,43 +78,62 @@ sub read_password {
   release => sub {
     my $self = shift;
     system("copher", "-u", $$self{user}, "-P", $$self{password}, "-p",
-      $package, "-k", $package, "-r", $version, "-N", $notes, "$package-$version.tar.gz") == 0
+      $vars{package}, "-k", $vars{package}, "-r", $vars{version}, "-N", $vars{notes}, "$vars{package}-$vars{version}.tar.gz") == 0
         or die "copher failed\n";
     unlink "out.html";
   }
  );
 
 %{$releaser{freshmeat}} = (
+  vars => Set::Scalar->new("package", "notes", "version"),
   release => sub {
     my $self = shift;
-    open(FILE, "|-", "ss.py", "release", "$package", "$version");
-    print FILE slurp($notes);
+    open(FILE, "|-", "ss.py", "release", $vars{package}, $vars{version});
+    print FILE slurp($vars{notes});
     close FILE or die "Snake Steak failed\n";
   }
  );
 
 %{$releaser{gnu}} = (
+  vars => Set::Scalar->new("notes", "package", "package_name", "upload", "version"),
   release => sub {
-    system("./build-aux/gnupload", "--to", "ftp.gnu.org:$package", "$package-$version.tar.gz") == 0
+    # FIXME: Get the command in the next line from the output of make {alpha,beta,stable}
+    system("./build-aux/gnupload", "--to", "$vars{upload}:$vars{package}", "$vars{package}-$vars{version}.tar.gz") == 0
       or die "gnupload failed\n";
-    my $message = slurp($notes);
-    mail("info-gnu\@gnu.org", "$package_name $version released", $message);
+
+    my $url = "$vars{upload}/gnu/$vars{package}/$vars{package}-$vars{version}.tar";
+
+    # Wait for URL to become available:
+    for (my $i = 0; $i < 100; $i++) {
+      system "wget", "--quiet", "-O", "-", "$url.gz.sig" and last;
+      sleep 10;
+    }
+
+    # Download and verify xz and gz signatures
+    # FIXME: Get correct suffixes (e.g. xz xz.sig bz2 bz2.sig) automatically
+    for my $i ("gz", "gz.sig") {
+      system "wget", "--quiet", "$url.$i" or last;
+      system "gpg", "--verify", basename($url) . ".$i" if $i =~ /\.sig$/;
+    }
+    my $message = slurp($vars{notes});
+    mail("info-gnu\@gnu.org", "$vars{package_name} $vars{version} released", $message);
   }
  );
 
 %{$releaser{"lua-l"}} = (
+  vars => Set::Scalar->new("home", "notes", "description"),
   release => sub {
-    my $release_notes = slurp($notes);
-    $url ||= "http://luaforge.net/projects/$package";
+    my $release_notes = slurp($vars{notes});
+    $vars{home} ||= "http://luaforge.net/projects/$vars{package}";
     my $message = <<END;
-I am happy to announce the release of $package_name $version,
-$description.
+I am happy to announce the release of $vars{package_name} $vars{version},
+$vars{description}.
 
 $release_notes
 
-Get it from $url
+Get it from $vars{home}
 END
-    mail("lua-l\@lists.lua.org", "[ANN] $package_name $version released", $message);
+    mail("lua-l\@lists.lua.org", "[ANN] $vars{package_name} $vars{version} released", $message);
   }
  );
 
@@ -115,37 +145,58 @@ sub mail {
   close FILE or die "mail failed\n";
 }
 
-if ($#ARGV < 5 || $#ARGV > 6) {
- my $methods = join ", ", keys %releaser;
- die <<END if $#ARGV != 5;
-Usage: $prog METHODS PACKAGE NAME VERSION DESCRIPTION NOTES [URL]
-Make a release
+my $methods = join ", ", keys %releaser;
+
+sub usage {
+  my ($exit_code) = @_;
+  print STDERR <<END;
+$prog [OPTION...] METHODS [VARIABLE=value...]
+Release a program.
 
   METHODS is a comma-separated list of methods, from:
     $methods
-  PACKAGE is the package base name
-  NAME is the package text name
-  VERSION is the version number
-  DESCRIPTION is the short project description
-  NOTES is the release notes file (need not exist)
-  URL is the home page URL
+
+ Options:
+  --vars                     display the variables needed by METHODS and exit
+  --help                     display this help and exit
+  --version                  display version information and exit
 END
+  exit $exit_code;
 }
 
 # Get arguments
-@methods = split /,/, shift;
-$package = shift;
-$package_name = shift;
-$version = shift;
-$description = shift;
-$notes = shift;
-$url = shift;
+my ($help_flag, $version_flag, $vars_flag);
+my $opts = GetOptions(
+  "help" => \$help_flag,
+  "version" => \$version_flag,
+  "vars" => \$vars_flag,
+) or usage(1);
+if ($version_flag) {
+  print STDERR $version_banner;
+  exit 0;
+}
+usage(0) if $help_flag or $#ARGV == -1;
+my @methods = split /,/, shift;
+foreach my $arg (@ARGV) {
+  $arg =~ s/([A-Za-z0-9_]+)\s*=\s*(.*)/$vars{$1} = $2/e;
+}
+my $needed = Set::Scalar->new();
+$needed = $needed->union($releaser{$_}{vars}) foreach @methods;
+my $missing;
+foreach my $e ($needed->elements) {
+  $missing = 1 unless $vars{$e};
+}
+if ($vars_flag || $missing) {
+  print STDERR "Variables needed:\n";
+  print STDERR "  $_: $var_help{$_}\n" foreach (sort $needed->elements);
+  exit $missing;
+}
 
 # Write release notes if non-existent
-if (!-e $notes) {
+if (!-e $vars{notes}) {
   die "VISUAL is not set; please set it!\n"
     if -z $ENV{VISUAL};
-  system($ENV{VISUAL}, $notes) == 0 or die "editor failed\n";
+  system($ENV{VISUAL}, $vars{notes}) == 0 or die "editor failed\n";
 }
 
 # Filter out unknown methods
