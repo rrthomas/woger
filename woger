@@ -1,7 +1,7 @@
 #!/usr/bin/env perl
 # Woger - make a release
 my $version_banner = <<END;
-Woger welease 17
+Woger welease 18
 Copyright (c) Reuben Thomas 2007-2011
 Released under the GPL version 3, or (at your option) any later version.
 END
@@ -121,7 +121,7 @@ sub read_password {
  );
 
 %{$releaser{"lua-l"}} = (
-  vars => Set::Scalar->new("home", "notes", "description"),
+  vars => Set::Scalar->new("package", "package_name", "home", "notes", "description"),
   release => sub {
     my $release_notes = slurp($vars{notes});
     $vars{home} ||= "http://luaforge.net/projects/$vars{package}";
