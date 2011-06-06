@@ -121,7 +121,7 @@ sub read_password {
  );
 
 %{$releaser{"lua-l"}} = (
-  vars => Set::Scalar->new("package", "package_name", "home", "notes", "description"),
+  vars => Set::Scalar->new("package", "package_name", "notes", "description"),
   release => sub {
     my $release_notes = slurp($vars{notes});
     $vars{home} ||= "http://luaforge.net/projects/$vars{package}";
