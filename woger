@@ -1,23 +1,23 @@
 #!/usr/bin/env perl
 # Woger - make a release
 my $version_banner = <<END;
-Woger welease 18
+Woger welease 19
 Copyright (c) Reuben Thomas 2007-2011
 Released under the GPL version 3, or (at your option) any later version.
 END
+
+# FIXME: Add methods rsync (e.g. for web sites), log (to announce on my log)
+
+# Dependencies:
+#   For email: mail that supports -a for attachment (e.g. heirloom-mailx)
+#   For SourceForge: copher: http://copher.sourceforge.net/
+#   For Freshmeat: Snake Steak: http://repo.cat-v.org/snake_steak/
 
 use 5.10.0;
 
 use warnings;
 use strict;
 
-# FIXME: Add methods rsync (e.g. for web sites), log (to announce on my log)
-
-# Dependencies:
-#   For email: mail
-#   For SourceForge: copher: http://copher.sourceforge.net/
-#   For Freshmeat: Snake Steak: http://repo.cat-v.org/snake_steak/
-use Term::ReadLine;
 use Perl6::Slurp;
 use Text::Wrap;
 use Set::Scalar;
@@ -32,12 +32,12 @@ my %var_help = (
   package_name => "package text name",
   version => "version number",
   description => "short project description",
+  dist_type => "file extension for distribution archive",
   notes => "release notes file (need not exist)",
   home => "home page URL",
   upload => "upload URL",
+  github_user => "github user",
 );
-
-my $term = Term::ReadLine->new($prog);
 
 
 # Release methods
@@ -45,42 +45,9 @@ my $term = Term::ReadLine->new($prog);
 my %releaser = ();
 my %vars;
 
-my $have_term_readkey = eval {require Term::ReadKey} // 0;
-
-sub read_password {
-  my $prompt = shift // 'Password';
-  if ($have_term_readkey) {
-    Term::ReadKey::ReadMode('noecho');
-  } else {
-    $prompt = $prompt . ' (will be shown)';
-  }
-  my $retval = $term->readline($prompt . ': ');
-  if ($have_term_readkey) {
-    print "\n"; # if noecho was on, CR wasn't printed
-    Term::ReadKey::ReadMode('restore');
-  }
-  return $retval;
-}
-
 %{$releaser{null}} = (
   vars => Set::Scalar->new,
   release => sub {
-  }
- );
-
-%{$releaser{sourceforge}} = (
-  vars => Set::Scalar->new("notes", "package", "version"),
-  getinfo => sub {
-    my $self = shift;
-    $$self{user} = $term->readline("SourceForge login: ");
-    $$self{password} = $term->read_password();
-  },
-  release => sub {
-    my $self = shift;
-    system("copher", "-u", $$self{user}, "-P", $$self{password}, "-p",
-      $vars{package}, "-k", $vars{package}, "-r", $vars{version}, "-N", $vars{notes}, "$vars{package}-$vars{version}.tar.gz") == 0
-        or die "copher failed\n";
-    unlink "out.html";
   }
  );
 
@@ -94,12 +61,23 @@ sub read_password {
   }
  );
 
+%{$releaser{"github"}} = (
+  vars => Set::Scalar->new("dist_type", "github_user", "package", "version"),
+  release => sub {
+    $vars{home} ||= "https://github.com/$vars{github_user}/$vars{package}";
+    my $archive = "$vars{package}-$vars{version}.$vars{dist_type}";
+    my $url = "https://github.com/downloads/$vars{github_user}/$vars{package}/$archive";
+    system("github-upload", $archive) == 0 or die "upload failed\n";
+  }
+ );
+
 %{$releaser{gnu}} = (
-  vars => Set::Scalar->new("notes", "package", "package_name", "upload", "version"),
+  vars => Set::Scalar->new("dist_type", "notes", "package", "package_name", "upload", "version"),
   release => sub {
     # FIXME: Get the command in the next line from the output of make {alpha,beta,stable}
-    system("./build-aux/gnupload", "--to", "$vars{upload}:$vars{package}", "$vars{package}-$vars{version}.tar.gz") == 0
-      or die "gnupload failed\n";
+    system("./build-aux/gnupload", "--to", "$vars{upload}:$vars{package}",
+           "$vars{package}-$vars{version}.$vars{dist_type}") == 0
+             or die "gnupload failed\n";
 
     my $url = "$vars{upload}/gnu/$vars{package}/$vars{package}-$vars{version}.tar";
 
@@ -120,29 +98,48 @@ sub read_password {
   }
  );
 
-%{$releaser{"lua-l"}} = (
-  vars => Set::Scalar->new("package", "package_name", "notes", "description"),
+%{$releaser{"lua"}} = (
+  vars => Set::Scalar->new("description", "dist_type", "notes", "package", "package_name", "version"),
   release => sub {
     my $release_notes = slurp($vars{notes});
-    $vars{home} ||= "http://luaforge.net/projects/$vars{package}";
+    $vars{home} ||= "https://github.com/$vars{github_user}/$vars{package}";
+    my $archive = "$vars{package}-$vars{version}.$vars{dist_type}";
+    my $url = "https://github.com/downloads/$vars{github_user}/$vars{package}/$archive";
     my $message = <<END;
 I am happy to announce the release of $vars{package_name} $vars{version},
 $vars{description}.
 
 $release_notes
 
-Get it from $vars{home}
+Download it from $url
+$vars{package_name}'s home page is at $vars{home}
 END
     mail("lua-l\@lists.lua.org", "[ANN] $vars{package_name} $vars{version} released", $message);
+    mail("luarocks-developers\@lists.sourceforge.net",
+         "[ANN] $vars{package_name} $vars{version} released: rockspec attached",
+         "$vars{package}-$vars{version}-1.rockspec");
+  }
+ );
+
+%{$releaser{sourceforge}} = (
+  vars => Set::Scalar->new("dist_type", "notes", "package", "version"),
+  release => sub {
+    my $self = shift;
+    system("copher", "-p", $vars{package}, "-k", $vars{package}, "-r", $vars{version},
+           "-N", $vars{notes}, "$vars{package}-$vars{version}.$vars{dist_type}") == 0
+             or die "copher failed\n";
+    unlink "out.html";
   }
  );
 
 
 sub mail {
-  my ($address, $subject, $body) = @_;
-  open(FILE, "|-", "mail", "-s", $subject, $address);
+  my ($address, $subject, $body, @attachments) = @_;
+  my @attach_args;
+  push @attach_args, "-a", $_ foreach @attachments;
+  open(FILE, "|-", "mail", "-s", $subject, $address, @attach_args);
   print FILE wrap('', '', ($body));
-  close FILE or die "mail failed\n";
+  close FILE or die "mail to $address failed\n";
 }
 
 my $methods = join ", ", keys %releaser;
