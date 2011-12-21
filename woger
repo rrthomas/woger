@@ -1,7 +1,7 @@
 #!/usr/bin/env perl
 # Woger - make a release
 my $version_banner = <<END;
-Woger welease 19
+Woger welease 20
 Copyright (c) Reuben Thomas 2007-2011
 Released under the GPL version 3, or (at your option) any later version.
 END
@@ -11,7 +11,7 @@ END
 # Dependencies:
 #   For email: mail that supports -a for attachment (e.g. heirloom-mailx)
 #   For SourceForge: copher: http://copher.sourceforge.net/
-#   For Freshmeat: Snake Steak: http://repo.cat-v.org/snake_steak/
+#   For Freecode: Snake Steak: http://repo.cat-v.org/snake_steak/
 
 use 5.10.0;
 
@@ -33,7 +33,8 @@ my %var_help = (
   version => "version number",
   description => "short project description",
   dist_type => "file extension for distribution archive",
-  notes => "release notes file (need not exist)",
+  email => "release email",
+  notes => "release notes file",
   home => "home page URL",
   upload => "upload URL",
   github_user => "github user",
@@ -51,7 +52,7 @@ my %vars;
   }
  );
 
-%{$releaser{freshmeat}} = (
+%{$releaser{freecode}} = (
   vars => Set::Scalar->new("package", "notes", "version"),
   release => sub {
     my $self = shift;
@@ -72,7 +73,7 @@ my %vars;
  );
 
 %{$releaser{gnu}} = (
-  vars => Set::Scalar->new("dist_type", "notes", "package", "package_name", "upload", "version"),
+  vars => Set::Scalar->new("dist_type", "email", "package", "package_name", "upload", "version"),
   release => sub {
     # FIXME: Get the command in the next line from the output of make {alpha,beta,stable}
     system("./build-aux/gnupload", "--to", "$vars{upload}:$vars{package}",
@@ -93,15 +94,16 @@ my %vars;
       system "wget", "--quiet", "$url.$i" or last;
       system "gpg", "--verify", basename($url) . ".$i" if $i =~ /\.sig$/;
     }
-    my $message = slurp($vars{notes});
-    mail("info-gnu\@gnu.org", "$vars{package_name} $vars{version} released", $message);
+    my $message = slurp($vars{email});
+    $message =~ s/^\n//s;
+    mail($message); # FIXME: Cope with Mail-Followup-To header
   }
  );
 
 %{$releaser{"lua"}} = (
-  vars => Set::Scalar->new("description", "dist_type", "notes", "package", "package_name", "version"),
+  vars => Set::Scalar->new("description", "dist_type", "email", "package", "package_name", "version"),
   release => sub {
-    my $release_notes = slurp($vars{notes});
+    my $release_notes = slurp($vars{email});
     $vars{home} ||= "https://github.com/$vars{github_user}/$vars{package}";
     my $archive = "$vars{package}-$vars{version}.$vars{dist_type}";
     my $url = "https://github.com/downloads/$vars{github_user}/$vars{package}/$archive";
@@ -114,8 +116,9 @@ $release_notes
 Download it from $url
 $vars{package_name}'s home page is at $vars{home}
 END
-    mail("lua-l\@lists.lua.org", "[ANN] $vars{package_name} $vars{version} released", $message);
-    mail("luarocks-developers\@lists.sourceforge.net",
+    mail($message, "lua-l\@lists.lua.org", "[ANN] $vars{package_name} $vars{version} released");
+    mail("Rockspec for $vars{package} version $vars{version} attached.",
+         "luarocks-developers\@lists.sourceforge.net",
          "[ANN] $vars{package_name} $vars{version} released: rockspec attached",
          "$vars{package}-$vars{version}-1.rockspec");
   }
@@ -134,10 +137,16 @@ END
 
 
 sub mail {
-  my ($address, $subject, $body, @attachments) = @_;
-  my @attach_args;
-  push @attach_args, "-a", $_ foreach @attachments;
-  open(FILE, "|-", "mail", "-s", $subject, $address, @attach_args);
+  my ($body, $address, $subject, @attachments) = @_;
+  my @args;
+  push @args, "-a", $_ foreach @attachments;
+  push @args, "-s", $subject if $subject;
+  if ($address) {
+    push @args, $address;
+  } else {
+    push @args, "-t";
+  }
+  open(FILE, "|-", "mail", @args);
   print FILE wrap('', '', ($body));
   close FILE or die "mail to $address failed\n";
 }
