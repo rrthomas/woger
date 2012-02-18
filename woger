@@ -101,9 +101,9 @@ my %vars;
  );
 
 %{$releaser{"lua"}} = (
-  vars => Set::Scalar->new("description", "dist_type", "email", "package", "package_name", "version"),
+  vars => Set::Scalar->new("description", "dist_type", "notes", "package", "package_name", "version"),
   release => sub {
-    my $release_notes = slurp($vars{email});
+    my $release_notes = slurp($vars{notes});
     $vars{home} ||= "https://github.com/$vars{github_user}/$vars{package}";
     my $archive = "$vars{package}-$vars{version}.$vars{dist_type}";
     my $url = "https://github.com/downloads/$vars{github_user}/$vars{package}/$archive";
