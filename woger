@@ -12,7 +12,7 @@ END
 #   For email: mail that supports -a for attachment (e.g. heirloom-mailx)
 #   For SourceForge: copher: http://copher.sourceforge.net/
 #   For Freecode: freecode-submit: http://www.catb.org/~esr/freecode-submit/
-#   For github: github-upload: https://gist.github.com/772010
+#   For github: github-upload: https://github.com/wereHamster/ghup
 
 use 5.10.0;
 
