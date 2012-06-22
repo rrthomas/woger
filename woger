@@ -58,7 +58,7 @@ my %vars;
   release => sub {
     my $self = shift;
     open(FILE, "|-", "freecode-submit");
-    print FILE "Project: $vars{package}\nVersion: $vars{version}\n\n" . slurp($vars{notes};
+    print FILE "Project: $vars{package}\nVersion: $vars{version}\n\n" . slurp($vars{notes});
     close FILE or die "freecode-submit failed\n";
   }
  );
