@@ -64,12 +64,9 @@ my %vars;
  );
 
 %{$releaser{"github"}} = (
-  vars => Set::Scalar->new("dist_type", "github_user", "package", "version"),
+  vars => Set::Scalar->new("dist_type", "package", "version"),
   release => sub {
-    $vars{home} ||= "https://github.com/$vars{github_user}/$vars{package}";
-    my $archive = "$vars{package}-$vars{version}.$vars{dist_type}";
-    my $url = "https://github.com/downloads/$vars{github_user}/$vars{package}/$archive";
-    system("github-upload", $archive) == 0 or die "upload failed\n";
+    system("github-upload", "$vars{package}-$vars{version}.$vars{dist_type}") == 0 or die "upload failed\n";
   }
  );
 
