@@ -103,8 +103,8 @@ my %vars;
   release => sub {
     my $release_notes = slurp($vars{notes});
     $vars{home} ||= "https://github.com/$vars{github_user}/$vars{package}";
-    my $archive = "$vars{package}-$vars{version}.$vars{dist_type}";
-    my $url = "https://github.com/downloads/$vars{github_user}/$vars{package}/$archive";
+    $vars{archive} ||= "$vars{package}-$vars{version}.$vars{dist_type}";
+    my $url = "https://github.com/downloads/$vars{github_user}/$vars{package}/$vars{archive}";
     my $message = <<END;
 I am happy to announce the release of $vars{package_name} $vars{version},
 $vars{description}.
