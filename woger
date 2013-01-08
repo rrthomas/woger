@@ -1,7 +1,7 @@
 #!/usr/bin/env perl
 # Woger - make a release
 my $version_banner = <<END;
-Woger welease 24
+Woger welease 25
 Copyright (c) Reuben Thomas 2007-2012
 Released under the GPL version 3, or (at your option) any later version.
 END
@@ -12,7 +12,6 @@ END
 #   For email: mail that supports -a for attachment (e.g. heirloom-mailx)
 #   For SourceForge: copher: http://copher.sourceforge.net/
 #   For Freecode: freecode-submit: http://www.catb.org/~esr/freecode-submit/
-#   For github: github-upload: https://github.com/wereHamster/ghup
 
 use 5.10.0;
 
@@ -27,6 +26,7 @@ use File::Basename;
 use Getopt::Long;
 
 my $prog = basename($0);
+my ($help_flag, $version_flag, $vars_flag, $dry_run_flag);
 
 my %var_help = (
   package => "package base name",
@@ -63,34 +63,27 @@ my %vars;
   }
  );
 
-%{$releaser{"github"}} = (
-  vars => Set::Scalar->new("dist_type", "package", "version"),
-  release => sub {
-    system("github-upload", "$vars{package}-$vars{version}.$vars{dist_type}") == 0 or die "upload failed\n";
-  }
- );
-
 %{$releaser{gnu}} = (
   vars => Set::Scalar->new("dist_type", "email", "package", "package_name", "upload", "version"),
   release => sub {
     # FIXME: Get the command in the next line from the output of make {alpha,beta,stable}
-    system("./build-aux/gnupload", "--to", "$vars{upload}:$vars{package}",
-           "$vars{package}-$vars{version}.$vars{dist_type}") == 0
-             or die "gnupload failed\n";
+    run("./build-aux/gnupload", "--to", "$vars{upload}:$vars{package}",
+        "$vars{package}-$vars{version}.$vars{dist_type}") == 0
+          or die "gnupload failed\n";
 
     my $url = "$vars{upload}/gnu/$vars{package}/$vars{package}-$vars{version}.tar";
 
     # Wait for URL to become available:
     for (my $i = 0; $i < 100; $i++) {
-      system "wget", "--quiet", "-O", "-", "$url.gz.sig" and last;
+      run("wget", "--quiet", "-O", "-", "$url.gz.sig") and last;
       sleep 10;
     }
 
     # Download and verify xz and gz signatures
     # FIXME: Get correct suffixes (e.g. xz xz.sig bz2 bz2.sig) automatically
     for my $i ("gz", "gz.sig") {
-      system "wget", "--quiet", "$url.$i" or last;
-      system "gpg", "--verify", basename($url) . ".$i" if $i =~ /\.sig$/;
+      run("wget", "--quiet", "$url.$i") or last;
+      run("gpg", "--verify", basename($url) . ".$i") if $i =~ /\.sig$/;
     }
     my $message = slurp($vars{email});
     $message =~ s/^\n//s;
@@ -98,27 +91,30 @@ my %vars;
   }
  );
 
-%{$releaser{"lua"}} = (
-  vars => Set::Scalar->new("description", "dist_type", "github_user", "notes", "package", "package_name", "version"),
+%{$releaser{lua}} = (
+  vars => Set::Scalar->new("description", "home", "notes", "package", "package_name", "version"),
   release => sub {
     my $release_notes = slurp($vars{notes});
-    $vars{home} ||= "https://github.com/$vars{github_user}/$vars{package}";
-    $vars{archive} ||= "$vars{package}-$vars{version}.$vars{dist_type}";
-    my $url = "https://github.com/downloads/$vars{github_user}/$vars{package}/$vars{archive}";
+    chomp $release_notes;
+    my $rock_suffix = "-1.rockspec";
+    my @rockspecs = glob ("$vars{package}-*$vars{version}$rock_suffix");
+    my @rocks = @rockspecs;
+    my $rocks = join ", ", map { s/$rock_suffix$//; $_ } @rocks;
     my $message = <<END;
 I am happy to announce the release of $vars{package_name} $vars{version},
 $vars{description}.
 
 $release_notes
 
-Download it from $url
+Install it as luarock $rocks (see http://luarocks.org/repositories/rocks )
 $vars{package_name}'s home page is at $vars{home}
 END
+    my $plural = $#rockspecs > 0 ? "s" : "";
     mail($message, "lua-l\@lists.lua.org", "[ANN] $vars{package_name} $vars{version} released");
-    mail("Rockspec for $vars{package} version $vars{version} attached.",
+    mail("Rockspec$plural for $vars{package} version $vars{version} attached.",
          "luarocks-developers\@lists.sourceforge.net",
-         "[ANN] $vars{package_name} $vars{version} released: rockspec attached",
-         "$vars{package}-$vars{version}-1.rockspec");
+         "[ANN] $vars{package_name} $vars{version} released; rockspec$plural attached",
+         @rockspecs);
   }
  );
 
@@ -126,13 +122,19 @@ END
   vars => Set::Scalar->new("dist_type", "notes", "package", "version"),
   release => sub {
     my $self = shift;
-    system("copher", "-p", $vars{package}, "-k", $vars{package}, "-r", $vars{version},
-           "-N", $vars{notes}, "$vars{package}-$vars{version}.$vars{dist_type}") == 0
-             or die "copher failed\n";
+    run("copher", "-p", $vars{package}, "-k", $vars{package}, "-r", $vars{version},
+        "-N", $vars{notes}, "$vars{package}-$vars{version}.$vars{dist_type}") == 0
+          or die "copher failed\n";
     unlink "out.html";
   }
  );
 
+
+sub run {
+  return system @_ unless $dry_run_flag;
+  print "Command: ", (join " ", @_);
+  return 1;
+}
 
 sub mail {
   my ($body, $address, $subject, @attachments) = @_;
@@ -144,9 +146,13 @@ sub mail {
   } else {
     push @args, "-t";
   }
-  open(FILE, "|-", "mail", @args);
-  print FILE wrap('', '', ($body));
-  close FILE or die "mail to $address failed\n";
+  unless ($dry_run_flag) {
+    open(FILE, "|-", "mail", @args);
+    print FILE wrap('', '', ($body));
+    close FILE or die "mail to $address failed\n";
+  } else {
+    print wrap('', '', "Email to: $address\n$subject\n\n$body\n");
+  }
 }
 
 my $methods = join ", ", keys %releaser;
@@ -161,6 +167,7 @@ Release a program.
     $methods
 
  Options:
+  --dry-run                  don't do anything, just display what would be done
   --vars                     display the variables needed by METHODS and exit
   --help                     display this help and exit
   --version                  display version information and exit
@@ -169,8 +176,8 @@ END
 }
 
 # Get arguments
-my ($help_flag, $version_flag, $vars_flag);
 my $opts = GetOptions(
+  "dry-run", \$dry_run_flag,
   "help" => \$help_flag,
   "version" => \$version_flag,
   "vars" => \$vars_flag,
@@ -188,7 +195,10 @@ my $needed = Set::Scalar->new();
 $needed = $needed->union($releaser{$_}{vars}) foreach @methods;
 my $missing;
 foreach my $e ($needed->elements) {
-  $missing = 1 unless $vars{$e};
+  unless ($vars{$e}) {
+    print STDERR "Variable $e missing\n";
+    $missing = 1;
+  }
 }
 if ($vars_flag || $missing) {
   print STDERR "Variables needed:\n";
