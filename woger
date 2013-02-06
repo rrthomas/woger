@@ -106,6 +106,14 @@ $vars{description}.
 $release_notes
 
 Install it as luarock $rocks (see http://luarocks.org/repositories/rocks )
+
+Most simply:
+
+  luarocks install $vars{package}
+
+(You may need to wait a while after this announcement lands before the
+rocks are available.)
+
 $vars{package_name}'s home page is at $vars{home}
 END
     my $plural = $#rockspecs > 0 ? "s" : "";
