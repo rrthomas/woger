@@ -38,7 +38,6 @@ my %var_help = (
   notes => "release notes file",
   home => "home page URL",
   upload => "upload URL",
-  github_user => "github user",
 );
 
 
