@@ -90,6 +90,8 @@ my %vars;
   }
  );
 
+# FIXME: Separate luarocks and lua-l methods out of lua, as not all
+# luarocks release are of interest to Lua developers.
 %{$releaser{lua}} = (
   vars => Set::Scalar->new("description", "home", "notes", "package", "package_name", "version"),
   release => sub {
