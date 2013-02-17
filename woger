@@ -200,7 +200,13 @@ foreach my $arg (@ARGV) {
 }
 
 # Check all methods are known
-@methods = grep { die "no such method $_\n" if !defined ($releaser{$_}); } @methods;
+@methods = grep {
+  if (!defined ($releaser{$_})) {
+    die "no such method $_\n";
+  } else {
+    1;
+  }
+} @methods;
 
 # Write release notes if non-existent
 $vars{notes} ||= "release-notes";
