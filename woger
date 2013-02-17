@@ -1,7 +1,7 @@
 #!/usr/bin/env perl
 # Woger - make a release
 my $version_banner = <<END;
-Woger welease 25
+Woger welease 26
 Copyright (c) Reuben Thomas 2007-2013
 Released under the GPL version 3, or (at your option) any later version.
 END
@@ -198,6 +198,19 @@ my @methods = split /,/, shift;
 foreach my $arg (@ARGV) {
   $arg =~ s/([A-Za-z0-9_]+)\s*=\s*(.*)/$vars{$1} = $2/e;
 }
+
+# Check all methods are known
+@methods = grep { die "no such method $_\n" if !defined ($releaser{$_}); } @methods;
+
+# Write release notes if non-existent
+$vars{notes} ||= "release-notes";
+if (!-e $vars{notes}) {
+  die "VISUAL is not set; please set it!\n"
+    if -z $ENV{VISUAL};
+  system($ENV{VISUAL} . " " . $vars{notes}) == 0 or die "editor failed\n";
+}
+
+# Check we have all needed variables
 my $needed = Set::Scalar->new();
 $needed = $needed->union($releaser{$_}{vars}) foreach @methods;
 my $missing;
@@ -213,28 +226,7 @@ if ($vars_flag || $missing) {
   exit $missing;
 }
 
-# Write release notes if non-existent
-if (!-e $vars{notes}) {
-  die "VISUAL is not set; please set it!\n"
-    if -z $ENV{VISUAL};
-  system($ENV{VISUAL} . " " . $vars{notes}) == 0 or die "editor failed\n";
-}
-
-# Filter out unknown methods
-@methods = grep {
-  if (!defined ($releaser{$_})) {
-    warn "no method $_; ignoring\n";
-    0;
-  } else {
-    1;
-  }
-} @methods;
-
 # Welease!
-for my $method (@methods) {
-  $releaser{$method}{getinfo}($releaser{$method})
-    if $releaser{$method}{getinfo};
-}
 for my $method (@methods) {
   $releaser{$method}{release}($releaser{$method});
 }
