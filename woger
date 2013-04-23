@@ -8,8 +8,12 @@ END
 
 # FIXME: Add methods rsync (e.g. for web sites), log (to announce on my log)
 
-# Dependencies:
-#   For email: mail that supports -a for attachment (e.g. heirloom-mailx)
+# On Ubuntu/Debian:
+# apt-get install libperl6-slurp-perl libtext-wrapper-perl libset-scalar-perl heirloom-mailx freecode-submit
+# (copher is not packaged in Ubuntu/Debian)
+
+# Program dependencies:
+#   For email: mail that supports -a for attachment (e.g. http://heirloom.sourceforge.net/mailx.html)
 #   For SourceForge: copher: http://copher.sourceforge.net/
 #   For Freecode: freecode-submit: http://www.catb.org/~esr/freecode-submit/
 
@@ -18,12 +22,12 @@ use 5.10.0;
 use warnings;
 use strict;
 
-use Perl6::Slurp;
-use Text::Wrap;
-use Set::Scalar;
-
 use File::Basename;
 use Getopt::Long;
+use Text::Wrap;
+
+use Perl6::Slurp;
+use Set::Scalar;
 
 my $prog = basename($0);
 my ($help_flag, $version_flag, $vars_flag, $dry_run_flag);
