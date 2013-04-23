@@ -220,17 +220,21 @@ foreach my $arg (@ARGV) {
   }
 } @methods;
 
-# Write release notes if non-existent
-$vars{notes} ||= "release-notes";
-if (!-e $vars{notes}) {
-  die "VISUAL is not set; please set it!\n"
-    if -z $ENV{VISUAL};
-  system($ENV{VISUAL} . " " . $vars{notes}) == 0 or die "editor failed\n";
-}
-
-# Check we have all needed variables
+# Make a set of all needed variables
 my $needed = Set::Scalar->new();
 $needed = $needed->union($releaser{$_}{vars}) foreach @methods;
+
+# Write release notes if needed
+if ($needed->has("notes")) {
+  $vars{notes} ||= "release-notes";
+  if (!-e $vars{notes}) {
+    die "VISUAL is not set; please set it!\n"
+      if -z $ENV{VISUAL};
+    system($ENV{VISUAL} . " " . $vars{notes}) == 0 or die "editor failed\n";
+  }
+}
+
+# Complain about missing variables
 my $missing;
 foreach my $e ($needed->elements) {
   unless ($vars{$e}) {
