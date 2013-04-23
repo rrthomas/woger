@@ -186,14 +186,13 @@ sub usage {
 $prog [OPTION...] METHODS [VARIABLE=value...]
 Release a program.
 
-  METHODS is a comma-separated list of methods, from:
-    $methods
+METHODS is a comma-separated list of methods, from:
+  $methods
 
- Options:
-  --dry-run                  don't do anything, just display what would be done
-  --vars                     display the variables needed by METHODS and exit
-  --help                     display this help and exit
-  --version                  display version information and exit
+  --dry-run            don't do anything, just display what would be done
+  --vars               display the variables needed by METHODS and exit
+  --help               display this help and exit
+  --version            display version information and exit
 END
   exit $exit_code;
 }
