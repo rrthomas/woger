@@ -203,12 +203,13 @@ my $opts = GetOptions(
   "help" => \$help_flag,
   "version" => \$version_flag,
   "vars" => \$vars_flag,
-) or usage(1);
+ ) or usage(1);
 if ($version_flag) {
   print STDERR $version_banner;
   exit 0;
 }
-usage(0) if $help_flag or $#ARGV == -1;
+usage(0) if $help_flag;
+usage(1) if $#ARGV == -1;
 my @methods = split /,/, shift;
 foreach my $arg (@ARGV) {
   $arg =~ s/([A-Za-z0-9_]+)\s*=\s*(.*)/$vars{$1} = $2/e;
