@@ -2,7 +2,7 @@
 # Woger - make a release
 my $version_banner = <<END;
 Woger welease 27
-Copyright (c) Reuben Thomas 2007-2013
+Copyright (c) Reuben Thomas 2007-2014
 Released under the GPL version 3, or (at your option) any later version.
 END
 
