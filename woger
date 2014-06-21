@@ -1,7 +1,7 @@
 #!/usr/bin/env perl
 # Woger - make a release
 my $version_banner = <<END;
-Woger welease 28
+Woger welease 29
 Copyright (c) Reuben Thomas 2007-2014
 Released under the GPL version 3, or (at your option) any later version.
 END
@@ -9,13 +9,12 @@ END
 # FIXME: Add methods rsync (e.g. for web sites), log (to announce on my log)
 
 # On Ubuntu/Debian:
-# apt-get install libperl6-slurp-perl libtext-wrapper-perl libset-scalar-perl heirloom-mailx freecode-submit
+# apt-get install libperl6-slurp-perl libtext-wrapper-perl libset-scalar-perl heirloom-mailx
 # (copher is not packaged in Ubuntu/Debian)
 
 # Program dependencies:
 #   For email: mail that supports -a for attachment (e.g. http://heirloom.sourceforge.net/mailx.html)
 #   For SourceForge: copher: http://copher.sourceforge.net/
-#   For Freecode: freecode-submit: http://www.catb.org/~esr/freecode-submit/
 
 use 5.10.0;
 
@@ -54,15 +53,6 @@ my %vars;
 %{$releaser{null}} = (
   vars => Set::Scalar->new,
   release => sub {
-  }
- );
-
-%{$releaser{freecode}} = (
-  vars => Set::Scalar->new("package", "notes", "version"),
-  release => sub {
-    open(FILE, "|-", "freecode-submit");
-    print FILE "Project: $vars{package}\nVersion: $vars{version}\n\n" . slurp($vars{notes});
-    close FILE or die "freecode-submit failed\n";
   }
  );
 
