@@ -1,8 +1,8 @@
 #!/usr/bin/env perl
 # Woger - make a release
 my $version_banner = <<END;
-Woger welease 30
-Copyright (c) Reuben Thomas 2007-2014
+Woger welease 31
+Copyright (c) Reuben Thomas 2007-2015
 Released under the GPL version 3, or (at your option) any later version.
 END
 
@@ -84,14 +84,14 @@ my %vars;
   }
  );
 
-%{$releaser{moonrocks}} = (
+%{$releaser{luarocks}} = (
   vars => Set::Scalar->new("package", "version"),
   release => sub {
     my $revision = $vars{revision} || "1";
     my $rock_suffix = "-$revision.rockspec";
     my @rockspecs = glob("$vars{package}-*$vars{version}$rock_suffix");
     for my $r (@rockspecs) {
-      run("moonrocks", "upload", $r);
+      run("luarocks", "upload", $r);
     }
   }
  );
@@ -125,7 +125,7 @@ rocks are available.)
 $vars{package_name}'s home page is at $vars{home}
 END
     mail($message, "lua-l\@lists.lua.org", "[ANN] $vars{package_name} $vars{version} released");
-    $releaser{moonrocks}{release}();
+    $releaser{luarocks}{release}();
   }
  );
 
