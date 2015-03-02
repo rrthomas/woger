@@ -1,7 +1,7 @@
 #!/usr/bin/env perl
 # Woger - make a release
 my $version_banner = <<END;
-Woger welease 31
+Woger welease 32
 Copyright (c) Reuben Thomas 2007-2015
 Released under the GPL version 3, or (at your option) any later version.
 END
@@ -113,14 +113,11 @@ $vars{description}.
 
 $release_notes
 
-Install it as luarock$plural $rocks (see http://rocks.moonscript.org/ )
+Install it as luarock$plural $rocks (see http://luarocks.org/ )
 
 Most simply:
 
   luarocks install $vars{package}
-
-(You may need to wait a while after this announcement lands before the
-rocks are available.)
 
 $vars{package_name}'s home page is at $vars{home}
 END
