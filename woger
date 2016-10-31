@@ -9,11 +9,11 @@ END
 # FIXME: Add methods rsync (e.g. for web sites), log (to announce on my log)
 
 # On Ubuntu/Debian:
-# apt-get install libperl6-slurp-perl libtext-wrapper-perl libset-scalar-perl heirloom-mailx
+# apt-get install libperl6-slurp-perl libtext-wrapper-perl libset-scalar-perl s-nail
 # (copher is not packaged in Ubuntu/Debian)
 
 # Program dependencies:
-#   For email: mail that supports -a for attachment (e.g. http://heirloom.sourceforge.net/mailx.html)
+#   For email: mail that supports -a for attachment (e.g. http://www.sdaoden.eu/code.html)
 #   For SourceForge: copher: http://copher.sourceforge.net/
 #   For GitHub: github-release
 
