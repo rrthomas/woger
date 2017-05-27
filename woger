@@ -6,8 +6,6 @@ Copyright (c) Reuben Thomas 2007-2017
 Released under the GPL version 3, or (at your option) any later version.
 END
 
-# FIXME: Add methods rsync (e.g. for web sites), log (to announce on my log)
-
 # On Ubuntu/Debian:
 # apt-get install libperl6-slurp-perl libtext-wrapper-perl libset-scalar-perl s-nail
 # (copher is not packaged in Ubuntu/Debian)
