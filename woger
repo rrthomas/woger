@@ -11,7 +11,7 @@ END
 # (copher is not packaged in Ubuntu/Debian)
 
 # Program dependencies:
-#   For email: mail that supports -a for attachment (e.g. http://www.sdaoden.eu/code.html)
+#   For email: mail that supports -a for attachment, e.g. S-nail: http://www.sdaoden.eu/code.html
 #   For SourceForge: copher: http://copher.sourceforge.net/
 #   For GitHub: github-release: https://github.com/aktau/github-release
 
