@@ -2,7 +2,7 @@
 # Woger - make a release
 my $version_banner = <<END;
 Woger welease 33
-Copyright (c) Reuben Thomas 2007-2016
+Copyright (c) Reuben Thomas 2007-2017
 Released under the GPL version 3, or (at your option) any later version.
 END
 
@@ -15,7 +15,7 @@ END
 # Program dependencies:
 #   For email: mail that supports -a for attachment (e.g. http://www.sdaoden.eu/code.html)
 #   For SourceForge: copher: http://copher.sourceforge.net/
-#   For GitHub: github-release
+#   For GitHub: github-release: https://github.com/aktau/github-release
 
 use 5.10.0;
 
