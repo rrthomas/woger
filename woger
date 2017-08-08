@@ -140,18 +140,19 @@ END
 %{$releaser{github}} = (
   vars => Set::Scalar->new("dist_type", "github_dist_type", "github_user", "package", "version"),
   release => sub {
+    my $tag = "v$vars{version}";
     chomp($ENV{GITHUB_TOKEN} = `netrc -p github-release.github.com`) or
       die "github token not found as password for github-release.github.com in .netrc"; # FIXME: de-hardwire this
     run("github-release", "release",
         "--user", $vars{github_user},
         "--repo", $vars{package},
-        "--tag", $vars{version},
-        "--name", "Release $vars{version}") == 0
+        "--tag", $tag,
+        "--name", "Release $tag") == 0
           or die "github-release release failed\n";
     run("github-release", "upload",
         "--user", $vars{github_user},
         "--repo", $vars{package},
-        "--tag", $vars{version},
+        "--tag", $tag,
         "--name", "$vars{package}-$vars{version}-$vars{github_dist_type}.$vars{dist_type}",
         "--file", "$vars{package}-$vars{version}.$vars{dist_type}") == 0
           or die "github-release upload failed\n";
