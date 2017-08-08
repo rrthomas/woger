@@ -1,7 +1,7 @@
 #!/usr/bin/env perl
 # Woger - make a release
 my $version_banner = <<END;
-Woger welease 33
+Woger welease 34
 Copyright (c) Reuben Thomas 2007-2017
 Released under the GPL version 3, or (at your option) any later version.
 END
@@ -42,7 +42,6 @@ my %var_help = (
   home => "home page URL",
   upload => "upload URL",
   github_user => "github user",
-  github_dist_type => "github distribution type",
 );
 
 
@@ -138,7 +137,7 @@ END
  );
 
 %{$releaser{github}} = (
-  vars => Set::Scalar->new("dist_type", "github_dist_type", "github_user", "package", "version"),
+  vars => Set::Scalar->new("dist_type", "github_user", "package", "version"),
   release => sub {
     my $tag = "v$vars{version}";
     chomp($ENV{GITHUB_TOKEN} = `netrc -p github-release.github.com`) or
@@ -153,7 +152,7 @@ END
         "--user", $vars{github_user},
         "--repo", $vars{package},
         "--tag", $tag,
-        "--name", "$vars{package}-$vars{version}-$vars{github_dist_type}.$vars{dist_type}",
+        "--name", "$vars{package}-$vars{version}.$vars{dist_type}",
         "--file", "$vars{package}-$vars{version}.$vars{dist_type}") == 0
           or die "github-release upload failed\n";
   }
