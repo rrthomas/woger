@@ -1,8 +1,8 @@
 #!/usr/bin/env perl
 # Woger - make a release
 my $version_banner = <<END;
-Woger welease 34
-Copyright (c) Reuben Thomas 2007-2017
+Woger welease 35
+Copyright (c) Reuben Thomas 2007-2018
 Released under the GPL version 3, or (at your option) any later version.
 END
 
@@ -11,7 +11,7 @@ END
 # (copher is not packaged in Ubuntu/Debian)
 
 # Program dependencies:
-#   For email: mail that supports -a for attachment, e.g. S-nail: http://www.sdaoden.eu/code.html
+#   For email: S-nail: http://www.sdaoden.eu/code.html
 #   For SourceForge: copher: http://copher.sourceforge.net/
 #   For GitHub: github-release: https://github.com/aktau/github-release
 
@@ -176,7 +176,7 @@ sub mail {
     push @args, "-t";
   }
   unless ($dry_run_flag) {
-    open(FILE, "|-", "mail", @args);
+    open(FILE, "|-", "s-nail", @args);
     print FILE wrap('', '', ($body));
     close FILE or die "mail to $address failed\n";
   } else {
