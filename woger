@@ -136,6 +136,7 @@ END
   }
  );
 
+# FIXME: add support for notes, using --description -
 %{$releaser{github}} = (
   vars => Set::Scalar->new("dist_type", "github_user", "package", "version"),
   release => sub {
