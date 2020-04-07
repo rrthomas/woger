@@ -1,19 +1,20 @@
 #!/usr/bin/env perl
 # Woger - make a release
 my $version_banner = <<END;
-Woger welease 35
-Copyright (c) Reuben Thomas 2007-2018
+Woger welease 36
+Copyright (c) Reuben Thomas 2007-2020
 Released under the GPL version 3, or (at your option) any later version.
 END
 
 # On Ubuntu/Debian:
-# apt-get install libperl6-slurp-perl libtext-wrapper-perl libset-scalar-perl s-nail
-# (copher is not packaged in Ubuntu/Debian)
+# apt-get install libperl6-slurp-perl libtext-wrapper-perl libset-scalar-perl s-nail luarocks
+# (copher and hub are not packaged in Ubuntu/Debian)
 
 # Program dependencies:
 #   For email: S-nail: http://www.sdaoden.eu/code.html
 #   For SourceForge: copher: http://copher.sourceforge.net/
-#   For GitHub: github-release: https://github.com/aktau/github-release
+#   For GitHub: hub: https://hub.github.com/
+#   For LuaRocks: luarocks: https://luarocks.org/
 
 use 5.10.0;
 
@@ -136,26 +137,14 @@ END
   }
  );
 
-# FIXME: add support for notes, using --description -
+# FIXME: add support for description, using -F - (replaces --message)
 %{$releaser{github}} = (
-  vars => Set::Scalar->new("dist_type", "github_user", "package", "version"),
+  vars => Set::Scalar->new("dist_type", "version"),
   release => sub {
     my $tag = "v$vars{version}";
-    chomp($ENV{GITHUB_TOKEN} = `netrc -p github-release.github.com`) or
-      die "github token not found as password for github-release.github.com in .netrc"; # FIXME: de-hardwire this
-    run("github-release", "release",
-        "--user", $vars{github_user},
-        "--repo", $vars{package},
-        "--tag", $tag,
-        "--name", "Release $tag") == 0
-          or die "github-release release failed\n";
-    run("github-release", "upload",
-        "--user", $vars{github_user},
-        "--repo", $vars{package},
-        "--tag", $tag,
-        "--name", "$vars{package}-$vars{version}.$vars{dist_type}",
-        "--file", "$vars{package}-$vars{version}.$vars{dist_type}") == 0
-          or die "github-release upload failed\n";
+    run("hub", "release", "create", "$tag", "--message", "Release $tag",
+        "--attach", "$vars{package}-$vars{version}.$vars{dist_type}") == 0
+          or die "hub release failed\n";
   }
  );
 
