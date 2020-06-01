@@ -138,7 +138,7 @@ END
 
 # FIXME: add support for description, using -F - (replaces --message)
 %{$releaser{github}} = (
-  vars => Set::Scalar->new("dist_type", "version"),
+  vars => Set::Scalar->new("dist_type", "package", "version"),
   release => sub {
     my $tag = "v$vars{version}";
     run("hub", "release", "create", "$tag", "--message", "Release $tag",
