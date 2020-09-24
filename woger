@@ -212,7 +212,7 @@ foreach my $arg (@ARGV) {
 
 # Check all methods are known
 @methods = grep {
-  if (!defined ($releaser{$_})) {
+  if (!defined($releaser{$_})) {
     die "no such method $_\n";
   } else {
     1;
