@@ -1,7 +1,7 @@
 #!/usr/bin/env perl
 # Woger - make a release
 my $version_banner = <<END;
-Woger welease 37
+Woger welease 38
 Copyright (c) Reuben Thomas 2007-2020
 Released under the GPL version 3, or (at your option) any later version.
 END
