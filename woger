@@ -163,6 +163,7 @@ sub mail {
     push @args, $address;
   } else {
     push @args, "-t";
+    $address = "(recipient given in message)";
   }
   unless ($dry_run_flag) {
     open(FILE, "|-", "s-nail", @args);
