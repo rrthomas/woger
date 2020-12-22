@@ -91,7 +91,7 @@ my %vars;
     my $rock_suffix = "-$revision.rockspec";
     my @rockspecs = glob("$vars{package}-*$vars{version}$rock_suffix");
     for my $r (@rockspecs) {
-      run("luarocks", "upload", $r);
+      run("luarocks", "upload", $r) or die "luarocks upload of `$r' failed\n";
     }
   }
  );
@@ -130,7 +130,7 @@ END
   vars => Set::Scalar->new("dist_type", "notes", "package", "version"),
   release => sub {
     run("copher", "-p", $vars{package}, "-k", $vars{package}, "-r", $vars{version},
-        "-N", $vars{notes}, "$vars{package}-$vars{version}.$vars{dist_type}") == 0
+        "-N", $vars{notes}, "$vars{package}-$vars{version}.$vars{dist_type}")
           or die "copher failed\n";
     unlink "out.html";
   }
@@ -142,15 +142,15 @@ END
   release => sub {
     my $tag = "v$vars{version}";
     run("hub", "release", "create", "$tag", "--message", "Release $tag",
-        "--attach", "$vars{package}-$vars{version}.$vars{dist_type}") == 0
+        "--attach", "$vars{package}-$vars{version}.$vars{dist_type}")
           or die "hub release failed\n";
   }
  );
 
 
 sub run {
-  return system @_ unless $dry_run_flag;
-  print "Command: ", (join " ", @_);
+  return (system @_) == 0 unless $dry_run_flag;
+  say STDERR "Command: ", (join " ", @_);
   return 1;
 }
 
