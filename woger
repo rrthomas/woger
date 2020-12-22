@@ -41,7 +41,6 @@ my %var_help = (
   email => "release email",
   notes => "release notes file",
   home => "home page URL",
-  upload => "upload URL",
 );
 
 
@@ -57,28 +56,31 @@ my %vars;
  );
 
 %{$releaser{gnu}} = (
-  vars => Set::Scalar->new("dist_type", "email", "package", "package_name", "upload", "version"),
+  vars => Set::Scalar->new(),
   release => sub {
-    # FIXME: Get the command in the next line from the output of make {alpha,beta,stable}
-    run("./build-aux/gnupload", "--to", "$vars{upload}:$vars{package}",
-        "$vars{package}-$vars{version}.$vars{dist_type}") == 0
-          or die "gnupload failed\n";
+    my $upload_commands = `make emit_upload_commands` or die "could not get upload commands\n";
+    $upload_commands =~ m|^\./build-aux/gnupload  --to ([a-z]+\.gnu\.org):([^ ]+) [^ ]+\-([^ ]+)\.(tar\.([^ ]+))$|m
+      or die "cannot parse upload commands\n";
+    my ($upload, $package, $version, $dist_type, $suffix) = ($1, $2, $3, $4, $5);
+    run("./build-aux/gnupload", "--to", "$upload:$package", "$package-$version.$dist_type")
+      or die "gnupload failed\n";
 
-    my $url = "$vars{upload}/gnu/$vars{package}/$vars{package}-$vars{version}.tar";
+    my $url = "$upload/gnu/$package/$package-$version.tar";
 
     # Wait for URL to become available:
-    for (my $i = 0; $i < 100; $i++) {
-      run("wget", "--quiet", "-O", "-", "$url.gz.sig") and last;
+    for (my $i = 0; $i < 10; $i++) {
+      run("wget", "--quiet", "-O", "-", "$url.$dist_type.sig") and last;
       sleep 10;
     }
 
-    # Download and verify xz and gz signatures
-    # FIXME: Get correct suffixes (e.g. xz xz.sig bz2 bz2.sig) automatically
-    for my $i ("gz", "gz.sig") {
+    # Download and verify compressed tarball and its signature
+    for my $i ($dist_type, "$dist_type.sig") {
       run("wget", "--quiet", "$url.$i") or last;
       run("gpg", "--verify", basename($url) . ".$i") if $i =~ /\.sig$/;
     }
-    my $message = slurp($vars{email});
+    $upload_commands =~ /^# send the ([^ ]+) e-mail$/m;
+    my $email = $1 or die "cannot parse email address from upload commands\n";
+    my $message = slurp(glob($email));
     $message =~ s/^\n//s;
     mail($message); # FIXME: Cope with Mail-Followup-To header
   }
