@@ -238,13 +238,13 @@ if ($needed->has("notes")) {
 my $missing = 0;
 foreach my $e ($needed->elements) {
   unless ($vars{$e}) {
-    print STDERR "Variable $e missing\n";
+    say STDERR "Variable $e missing";
     $missing = 1;
   }
 }
 if ($vars_flag || $missing) {
-  print STDERR "Variables needed:\n";
-  print STDERR "  $_: $var_help{$_}\n" foreach (sort $needed->elements);
+  say STDERR "Variables needed:";
+  say STDERR "  $_: $var_help{$_}" foreach (sort $needed->elements);
   exit $missing;
 }
 
