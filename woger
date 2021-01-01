@@ -67,8 +67,10 @@ my %vars;
 
     my $url = "$upload/gnu/$package/$package-$version.tar";
 
-    # Wait for URL to become available:
-    for (my $i = 0; $i < 10; $i++) {
+
+    say STDERR "Waiting for download to become available (may take a few minutes)";
+    # Wait for URL to become available: can take up to 5 minutes
+    for (my $i = 0; $i < 32; $i++) {
       run("wget", "--quiet", "-O", "-", "$url.$dist_type.sig") and last;
       sleep 10;
     }
