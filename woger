@@ -1,8 +1,8 @@
 #!/usr/bin/env perl
 # Woger - make a release
 my $version_banner = <<END;
-Woger welease 39
-Copyright (c) Reuben Thomas 2007-2020
+Woger welease 40
+Copyright (c) Reuben Thomas 2007-2021
 Released under the GPL version 3, or (at your option) any later version.
 END
 
@@ -65,18 +65,17 @@ my %vars;
     run("./build-aux/gnupload", "--to", "$upload:$package", "$package-$version.$dist_type")
       or die "gnupload failed\n";
 
-    my $url = "$upload/gnu/$package/$package-$version.tar";
-
-
     say STDERR "Waiting for download to become available (may take a few minutes)";
+    my $url = "https://$upload/gnu/$package/$package-$version.tar.$suffix";
     # Wait for URL to become available: can take up to 5 minutes
+    say STDERR "Checking $url.sig";
     for (my $i = 0; $i < 32; $i++) {
-      run("wget", "--quiet", "-O", "-", "$url.$dist_type.sig") and last;
+      run("wget", "--quiet", "-O", "-", "$url.sig") and last;
       sleep 10;
     }
 
     # Download and verify compressed tarball and its signature
-    for my $i ($dist_type, "$dist_type.sig") {
+    for my $i ($suffix, "$suffix.sig") {
       run("wget", "--quiet", "$url.$i") or last;
       run("gpg", "--verify", basename($url) . ".$i") if $i =~ /\.sig$/;
     }
