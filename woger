@@ -159,7 +159,7 @@ sub run {
 
 sub mail {
   my ($body, $address, $subject, @attachments) = @_;
-  my @args;
+  my @args = ("-Sttycharset=utf-8");
   push @args, "-a", $_ foreach @attachments;
   push @args, "-s", $subject if $subject;
   if ($address) {
