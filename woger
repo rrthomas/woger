@@ -1,7 +1,7 @@
 #!/usr/bin/env perl
 # Woger - make a release
 my $version_banner = <<END;
-Woger welease 41
+Woger welease 42
 Copyright (c) Reuben Thomas 2007-2023
 Released under the GPL version 3, or (at your option) any later version.
 END
@@ -37,7 +37,7 @@ my %var_help = (
   version => "version number",
   revision => "packaging revision number",
   description => "short project description",
-  dist_type => "file extension for distribution archive",
+  dist_type => "comma-separated file extensions for distribution archives",
   email => "release email",
   notes => "release notes file",
   home => "home page URL",
@@ -62,7 +62,8 @@ my %vars;
     $upload_commands =~ m|^\./build-aux/gnupload  --to ([a-z]+\.gnu\.org):([^ ]+) [^ ]+\-([^ ]+)\.(tar\.([^ ]+))$|m
       or die "cannot parse upload commands\n";
     my ($upload, $package, $version, $dist_type, $suffix) = ($1, $2, $3, $4, $5);
-    run("./build-aux/gnupload", "--to", "$upload:$package", "$package-$version.$dist_type")
+    my @archives = make_archive_names("$package-$version", $dist_type);
+    run("./build-aux/gnupload", "--to", "$upload:$package", @archives)
       or die "gnupload failed\n";
 
     say STDERR "Waiting for download to become available (may take a few minutes)";
@@ -139,14 +140,14 @@ END
   }
  );
 
-# FIXME: add support for description, using --notes-file
 %{$releaser{github}} = (
   vars => Set::Scalar->new("dist_type", "package", "version"),
   release => sub {
     my $tag = "v$vars{version}";
-    run("gh", "release", "create", "$tag", "--title", "Release $tag",
-        "$vars{package}-$vars{version}.$vars{dist_type}")
-          or die "hub release failed\n";
+    my @archives = make_archive_names("$vars{package}-$vars{version}", $vars{dist_type});
+    my @cmd = ("gh", "release", "create", "$tag", "--title", "Release $tag");
+    push @cmd, "--notes-file", $vars{notes} if $vars{notes};
+    run(@cmd, @archives) or die "gh release failed\n";
   }
  );
 
@@ -155,6 +156,15 @@ sub run {
   return (system @_) == 0 unless $dry_run_flag;
   say STDERR "Command: ", (join " ", @_);
   return 1;
+}
+
+sub make_archive_names {
+  my ($base, $dist_types) = @_;
+  my @archives = ();
+  for my $type (split /,/, $dist_types) {
+    push @archives, "$base.$type";
+  }
+  return @archives;
 }
 
 sub mail {
