@@ -242,7 +242,7 @@ if ($needed->has("notes")) {
   if (!-e $vars{notes}) {
     die "VISUAL is not set; please set it!\n"
       if -z $ENV{VISUAL};
-    system($ENV{VISUAL} . " " . $vars{notes}) == 0 or die "editor failed\n";
+    run($ENV{VISUAL}, $vars{notes}) == 0 or die "editor failed\n";
   }
 }
 
