@@ -12,7 +12,7 @@ END
 
 # Program dependencies:
 #   For email: S-nail: https://www.sdaoden.eu/code.html
-#   For SourceForge: copher: http://copher.sourceforge.net/
+#   For SourceForge: copher: https://copher.sourceforge.net/
 #   For GitHub: gh: https://github.com/cli/cli
 #   For LuaRocks: luarocks: https://luarocks.org/
 
@@ -110,18 +110,17 @@ my %vars;
     my @rockspecs = glob("$vars{package}-*$vars{version}$rock_suffix");
     my @rocks = @rockspecs;
     my $rocks = join ", ", map { s/$rock_suffix$//; $_ } @rocks;
-    my $plural = $#rockspecs > 0 ? "s" : "";
     my $message = <<END;
 I am happy to announce the release of $vars{package_name} $vars{version},
 $vars{description}.
 
 $release_notes
 
-Install it as luarock$plural $rocks (see http://luarocks.org/ )
-
-Most simply:
+Install it with:
 
   luarocks install $vars{package}
+
+See https://luarocks.org/
 
 $vars{package_name}'s home page is at $vars{home}
 END
