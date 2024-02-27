@@ -13,7 +13,7 @@ END
 # Program dependencies:
 #   For email: S-nail: https://www.sdaoden.eu/code.html
 #   For SourceForge: copher: http://copher.sourceforge.net/
-#   For GitHub: hub: https://hub.github.com/
+#   For GitHub: gh: https://github.com/cli/cli
 #   For LuaRocks: luarocks: https://luarocks.org/
 
 use 5.10.0;
