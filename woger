@@ -1,8 +1,8 @@
 #!/usr/bin/env perl
 # Woger - make a release
 my $version_banner = <<END;
-Woger welease 45
-Copyright (c) Reuben Thomas 2007-2024
+Woger welease 46
+Copyright (c) Reuben Thomas 2007-2025
 Released under the GPL version 3, or (at your option) any later version.
 END
 
@@ -85,6 +85,24 @@ my %vars;
     my $message = slurp(glob($email));
     $message =~ s/^\n//s;
     mail($message); # FIXME: Cope with Mail-Followup-To header
+  }
+ );
+
+%{$releaser{translationproject}} = (
+  vars => Set::Scalar->new("description", "home", "release_url", "package", "package_name", "version"),
+  release => sub {
+    my $message = <<END;
+I am happy to announce the release of $vars{package_name} $vars{version},
+$vars{description}.
+
+The release tarball containing the POT file may be found at:
+$vars{release_url}
+
+$vars{package_name}'s home page is at $vars{home}
+
+Many thanks to all the translators who help make $vars{package_name} multilingual!
+END
+    mail($message, "coordinator\@translationproject.org", "$vars{package}.pot version $vars{version}");
   }
  );
 
