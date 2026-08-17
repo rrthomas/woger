@@ -1,8 +1,8 @@
 #!/usr/bin/env perl
 # Woger - make a release
 my $version_banner = <<END;
-Woger welease 46
-Copyright (c) Reuben Thomas 2007-2025
+Woger welease 47
+Copyright (c) Reuben Thomas 2007-2026
 Released under the GPL version 3, or (at your option) any later version.
 END
 
@@ -142,7 +142,7 @@ See https://luarocks.org/
 
 $vars{package_name}'s home page is at $vars{home}
 END
-    mail($message, "lua-l\@lists.lua.org", "[ANN] $vars{package_name} $vars{version} released");
+    mail($message, "lua-l\@googlegroups.com", "[ANN] $vars{package_name} $vars{version} released");
     $releaser{luarocks}{release}();
   }
  );
